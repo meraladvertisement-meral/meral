@@ -41,7 +41,7 @@ const getSystemInstruction = (config: QuizConfig) => {
 };
 
 export const generateQuizFromImage = async (base64Image: string, config: QuizConfig) => {
-  const apiKey = process.env.API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey) throw new Error("API_KEY is missing from environment variables.");
 
   const ai = new GoogleGenAI({ apiKey });
@@ -68,7 +68,7 @@ return JSON.parse(text.trim());
 };
 
 export const generateQuizFromText = async (inputText: string, config: QuizConfig) => {
-  const apiKey = process.env.API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey) throw new Error("API_KEY is missing from environment variables.");
 
   const ai = new GoogleGenAI({ apiKey });
