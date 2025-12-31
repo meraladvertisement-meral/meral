@@ -5,11 +5,9 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   define: {
-    // هذا السطر يحل مشكلة الشاشة الزرقاء الناتجة عن "process is not defined"
-    'process.env': process.env
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: false
+    // نستخدم 'process.env': 'process.env' أو كائن فارغ كحماية إضافية
+    'process.env': {
+      API_KEY: JSON.stringify(process.env.API_KEY)
+    }
   }
 });

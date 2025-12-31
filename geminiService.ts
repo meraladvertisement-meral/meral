@@ -2,6 +2,13 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { QuestionType, QuizConfig } from "./types";
 
+// إخبار TypeScript أن process موجود عالمياً لتجنب خطأ TS2580
+declare const process: {
+  env: {
+    API_KEY: string;
+  };
+};
+
 const QUIZ_SCHEMA = {
   type: Type.ARRAY,
   items: {
@@ -35,7 +42,6 @@ const getSystemInstruction = (config: QuizConfig) => {
 };
 
 export const generateQuizFromImage = async (base64Image: string, config: QuizConfig) => {
-  // استخدام المفتاح من بيئة العمل
   const apiKey = process.env.API_KEY;
   if (!apiKey) throw new Error("API_KEY is missing from environment variables.");
 
@@ -53,7 +59,12 @@ export const generateQuizFromImage = async (base64Image: string, config: QuizCon
       responseSchema: QUIZ_SCHEMA,
     },
   });
-  return JSON.parse(response.text.trim());
+
+  const text = response.text;
+  if (typeof text !== 'string') {
+    throw new Error("Model failed to generate a valid text response.");
+  }
+  return JSON.parse(text.trim());
 };
 
 export const generateQuizFromText = async (inputText: string, config: QuizConfig) => {
@@ -69,5 +80,10 @@ export const generateQuizFromText = async (inputText: string, config: QuizConfig
       responseSchema: QUIZ_SCHEMA,
     },
   });
-  return JSON.parse(response.text.trim());
+
+  const text = response.text;
+  if (typeof text !== 'string') {
+    throw new Error("Model failed to generate a valid text response.");
+  }
+  return JSON.parse(text.trim());
 };
