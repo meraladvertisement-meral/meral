@@ -26,6 +26,7 @@ export interface QuizConfig {
 export interface PlayerState {
   score: number;
   currentQuestionIndex: number;
+  // نستخدم attempts لتخزين عدد المحاولات لكل سؤال باستخدام معرف السؤال
   attempts: Record<string, number>;
   isFinished: boolean;
   isWaiting: boolean;
