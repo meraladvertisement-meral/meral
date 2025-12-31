@@ -7,8 +7,14 @@ import { BalloonPopGame } from './components/BalloonPopGame';
 
 declare var Peer: any;
 
+// دالة توليد كود مختلط (حروف وأرقام) - استبعاد الحروف المتشابهة لسهولة القراءة
 const generateShortId = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 };
 
 const QuizSnapLogo: React.FC<{ size?: number }> = ({ size = 180 }) => (
@@ -43,7 +49,7 @@ const QuizSnapLogo: React.FC<{ size?: number }> = ({ size = 180 }) => (
         <span className="text-white drop-shadow-[0_0_15px_rgba(59,130,246,0.9)]">Quiz</span>
         <span className="text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.9)]">Snap</span>
       </div>
-      <p className="text-blue-300 text-[11px] font-bold tracking-[0.4em] uppercase opacity-70 mt-2" dir="ltr">Smart Learning AI</p>
+      <p className="text-blue-300 text-[11px] font-bold tracking-[0.4em] uppercase mt-2" dir="ltr">Smart Learning AI</p>
     </div>
   </div>
 );
@@ -71,12 +77,15 @@ const App: React.FC = () => {
   const [showLegal, setShowLegal] = useState<'none' | 'policy' | 'terms'>('none');
   const [history, setHistory] = useState<SavedGame[]>([]);
   const [mode, setMode] = useState<'solo' | 'multi'>('solo');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   
   const [peer, setPeer] = useState<any>(null);
   const [conn, setConn] = useState<any>(null);
   const [roomId, setRoomId] = useState('');
   const [joinId, setJoinId] = useState('');
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'success'>('idle');
   const [opponent, setOpponent] = useState<PlayerState | null>(null);
+  const [isFriendConnected, setIsFriendConnected] = useState(false);
 
   const [config, setConfig] = useState<QuizConfig>({ count: 5, difficulty: 'medium', language: 'ar', allowedTypes: [QuestionType.MULTIPLE_CHOICE] });
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -92,7 +101,8 @@ const App: React.FC = () => {
     ar: {
       welcome: "أهلاً بك في كويز سناب 👋",
       authSub: "سريع وآمن للعائلات.",
-      google: "دخول سريع",
+      google: "دخول سريع عبر Google",
+      loggingIn: "جاري التحقق...",
       acceptText: "أوافق على ",
       privacyLink: "سياسة الخصوصية",
       termsLink: "شروط الاستخدام",
@@ -100,23 +110,32 @@ const App: React.FC = () => {
       settings: 'إعدادات الاختبار', winner: 'أداء عبقري! 💎',
       scoreLabel: 'النتيجة', points: 'نقطة', score: 'النقاط:', home: 'الرئيسية',
       generate: 'تحليل وإنشاء ✨', snap: 'تصوير الدرس 📸', 
-      paste: 'نص يدوي 📝', pastePlaceholder: 'ضع النص هنا ليقوم الذكاء الاصطناعي بتحليله...', back: 'تراجع', loadingMsg: 'جاري التحليل...',
+      paste: 'نص يدوي 📝', pastePlaceholder: 'ضع النص هنا ليقوم الذكاء الاصطناعي بتحليله...', back: 'رجوع', loadingMsg: 'جاري التحليل...',
       balloons: '🎈 فرقع البالونات!', qType: 'نوع الأسئلة:', mcq: 'ABC', tf: 'T/F', fill: '___',
-      qCount: 'عدد الأسئلة:', history: 'السجل 📜', historyTitle: 'آخر الألعاب', noHistory: 'No History',
-      quizOf: 'اختبار بتاريخ', questions: 'سؤال', joinTitle: 'انضم للمواجهة', joinPlaceholder: 'ادخل الكود',
-      copy: 'نسخ الرابط 🔗', copied: 'تم النسخ! ✅', backBtn: 'تراجع',
+      qCount: 'عدد الأسئلة:', history: 'السجل 📜', historyTitle: 'سجل الاختبارات', noHistory: 'لا توجد سجلات بعد',
+      quizOf: 'اختبار بتاريخ', questionsCount: 'سؤال', joinTitle: 'انضم للمواجهة', joinPlaceholder: 'ادخل الكود المختلط',
+      copy: 'نسخ الرابط 🔗', copied: 'تم النسخ! ✅', backBtn: 'رجوع',
       quizReady: 'الاختبار جاهز! 🎉', startQuiz: 'ابدأ التحدي 🔊',
       enableMusic: '🔊 الصوت مفعل',
       diffLabel: 'الصعوبة:',
       easy: 'سهل 👶', medium: 'متوسط ⚡', hard: 'صعب 🔥',
       waitingFriend: 'بانتظار صديقك...', connect: 'دخول المواجهة 🔗', hostCode: 'كود الغرفة:', shareCode: 'أرسل الكود لصديقك',
       you: 'أنت', opponent: 'الخصم', win: 'الفائز!', draw: 'تعادل!', totalScore: 'النتيجة النهائية',
-      close: "إغلاق"
+      close: "إغلاق",
+      quitConfirm: "هل تريد حقاً الخروج من الاختبار؟ ستفقد تقدمك.",
+      inviteFriend: "رابط الدعوة:",
+      friendJoined: "صديقك متصل الآن! 🟢",
+      proceed: "استمرار للإعدادات ➡️",
+      clearAll: "مسح الكل 🗑️",
+      dateLabel: "التاريخ:",
+      bestScoreLabel: "أفضل نتيجة:",
+      opponentProgress: "تقدم الخصم"
     },
     en: {
       welcome: "Welcome to QuizSnap 👋",
       authSub: "Fast and safe for families.",
-      google: "Quick Start",
+      google: "Quick Start with Google",
+      loggingIn: "Authenticating...",
       acceptText: "I agree to ",
       privacyLink: "Privacy Policy",
       termsLink: "Terms of Use",
@@ -126,8 +145,8 @@ const App: React.FC = () => {
       generate: 'Generate ✨', snap: 'Snap Lesson 📸', 
       paste: 'Manual Text 📝', pastePlaceholder: 'Paste text here...', back: 'Back', loadingMsg: 'Analyzing...',
       balloons: '🎈 Pop Balloons!', qType: 'Type:', mcq: 'ABC', tf: 'T/F', fill: '___',
-      qCount: 'Count:', history: 'History 📜', historyTitle: 'Recent Games', noHistory: 'No history',
-      quizOf: 'Quiz of', questions: 'Questions', joinTitle: 'Join Duel', joinPlaceholder: 'Enter Code',
+      qCount: 'Count:', history: 'History 📜', historyTitle: 'Quiz History', noHistory: 'No history yet',
+      quizOf: 'Quiz of', questionsCount: 'questions', joinTitle: 'Join Duel', joinPlaceholder: 'Enter Alphanumeric Code',
       copy: 'Copy Link 🔗', copied: 'Copied! ✅', backBtn: 'Back',
       quizReady: 'Quiz Ready! 🎉', startQuiz: 'Start Challenge 🔊',
       enableMusic: '🔊 Sound Enabled',
@@ -135,12 +154,21 @@ const App: React.FC = () => {
       easy: 'Easy 👶', medium: 'Med ⚡', hard: 'Hard 🔥',
       waitingFriend: 'Waiting...', connect: 'Join Duel 🔗', hostCode: 'Room Code:', shareCode: 'Send to friend',
       you: 'YOU', opponent: 'OPPONENT', win: 'WINNER!', draw: 'DRAW!', totalScore: 'FINAL SCORE',
-      close: "Close"
+      close: "Close",
+      quitConfirm: "Quit quiz? You will lose progress.",
+      inviteFriend: "Invite Link:",
+      friendJoined: "Friend connected! 🟢",
+      proceed: "Proceed to Settings ➡️",
+      clearAll: "Clear All 🗑️",
+      dateLabel: "Date:",
+      bestScoreLabel: "Best Score:",
+      opponentProgress: "Opponent Progress"
     },
     de: {
       welcome: "Willkommen 👋",
       authSub: "Sicher für Familien.",
-      google: "Schnellstart",
+      google: "Schnellstart mit Google",
+      loggingIn: "Authentifizierung...",
       acceptText: "Ich stimme zu ",
       privacyLink: "Datenschutz",
       termsLink: "Nutzungsbedingungen",
@@ -150,8 +178,8 @@ const App: React.FC = () => {
       generate: 'Generieren ✨', snap: 'Knipsen 📸', 
       paste: 'Manueller Text 📝', pastePlaceholder: 'Text hier einfügen...', back: 'Zurück', loadingMsg: 'Analyse...',
       balloons: '🎈 Ballons!', qType: 'Fragetyp:', mcq: 'ABC', tf: 'W/F', fill: '___',
-      qCount: 'Anzahl:', history: 'Verlauf 📜', historyTitle: 'Letzte Spiele', noHistory: 'Kein Verlauf',
-      quizOf: 'Quiz vom', questions: 'Fragen', joinTitle: 'Beitreten', joinPlaceholder: 'Code',
+      qCount: 'Anzahl:', history: 'Verlauf 📜', historyTitle: 'Verlauf', noHistory: 'Kein Verlauf vorhanden',
+      quizOf: 'Quiz vom', questionsCount: 'Fragen', joinTitle: 'Beitreten', joinPlaceholder: 'Code eingeben',
       copy: 'Link kopieren 🔗', copied: 'Kopiert! ✅', backBtn: 'Zurück',
       quizReady: 'Bereit! 🎉', startQuiz: 'Starten 🔊',
       enableMusic: '🔊 Sound an',
@@ -159,7 +187,15 @@ const App: React.FC = () => {
       easy: 'Leicht 👶', medium: 'Mittel ⚡', hard: 'Schwer 🔥',
       waitingFriend: 'Warten...', connect: 'Beitreten 🔗', hostCode: 'Raumcode:', shareCode: 'Code senden',
       you: 'DU', opponent: 'GEGNER', win: 'GEWINNER!', draw: 'REMIS!', totalScore: 'ENDSTAND',
-      close: "Schließen"
+      close: "Schließen",
+      quitConfirm: "Quiz verlassen? Dein Fortschritt geht verloren.",
+      inviteFriend: "Einladungslink:",
+      friendJoined: "Freund ist da! 🟢",
+      proceed: "Zu den Einstellungen ➡️",
+      clearAll: "Alle löschen 🗑️",
+      dateLabel: "Datum:",
+      bestScoreLabel: "Bestes Ergebnis:",
+      opponentProgress: "Gegner-Fortschritt"
     }
   };
 
@@ -169,7 +205,50 @@ const App: React.FC = () => {
     document.dir = (lang === 'ar') ? 'rtl' : 'ltr';
     const saved = localStorage.getItem('quiz_history');
     if (saved) setHistory(JSON.parse(saved));
+
+    const params = new URLSearchParams(window.location.search);
+    const jId = params.get('join');
+    if (jId) setJoinId(jId.toUpperCase());
   }, [lang]);
+
+  const handleBack = () => {
+    if (step === 'config') setStep(mode === 'multi' ? 'lobby' : 'home');
+    else if (step === 'join') setStep('home');
+    else if (step === 'lobby') setStep('home');
+    else if (step === 'history') setStep('home');
+    else if (step === 'paste') setStep('config');
+    else if (step === 'ready') setStep('config');
+    else if (step === 'quiz') {
+      if (window.confirm(t.quitConfirm)) {
+        stopBg();
+        setStep('home');
+      }
+    }
+    else if (step === 'reward') setStep('home');
+    else if (step === 'minigame_balloons') setStep('home');
+    else setStep('home');
+  };
+
+  const deleteHistoryItem = (id: string) => {
+    const updated = history.filter(item => item.id !== id);
+    setHistory(updated);
+    localStorage.setItem('quiz_history', JSON.stringify(updated));
+  };
+
+  const clearAllHistory = () => {
+    if (window.confirm(lang === 'ar' ? 'هل أنت متأكد من مسح جميع السجلات؟' : 'Clear all records?')) {
+      setHistory([]);
+      localStorage.removeItem('quiz_history');
+    }
+  };
+
+  const copyInviteLink = () => {
+    const link = `${window.location.origin}${window.location.pathname}?join=${roomId}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopyStatus('success');
+      setTimeout(() => setCopyStatus('idle'), 2000);
+    });
+  };
 
   const handleMultiplayerData = (data: MultiplayerMessage) => {
     switch (data.type) {
@@ -180,6 +259,11 @@ const App: React.FC = () => {
         break;
       case 'PROGRESS':
         setOpponent(data.payload);
+        if (data.payload.isFinished && player.isFinished) {
+           stopBg();
+           playSound('win');
+           setStep('reward');
+        }
         break;
     }
   };
@@ -192,26 +276,36 @@ const App: React.FC = () => {
       setRoomId(id);
       setPeer(p);
       setMode('multi');
-      setStep('config');
+      setStep('lobby');
+    });
+    p.on('connection', (c: any) => {
+      setConn(c);
+      setIsFriendConnected(true);
+      playSound('correct');
+      c.on('data', (data: MultiplayerMessage) => handleMultiplayerData(data));
     });
     p.on('error', () => initMultiplayerHost());
   };
 
   const connectToRoom = (id: string) => {
-    if (!id || id.length < 6) return;
+    const cleanId = id.trim().toUpperCase();
+    if (!cleanId || cleanId.length < 6) return;
     unlockAudio();
     setStep('loading');
     const p = new Peer();
     p.on('open', () => {
-      const c = p.connect(id);
+      const c = p.connect(cleanId);
       setConn(c);
+      c.on('open', () => {
+        setIsFriendConnected(true);
+        setMode('multi');
+      });
       c.on('data', (data: MultiplayerMessage) => handleMultiplayerData(data));
       c.on('error', () => {
         alert("Room not found.");
         setStep('home');
       });
       setPeer(p);
-      setMode('multi');
     });
   };
 
@@ -220,10 +314,31 @@ const App: React.FC = () => {
       alert(lang === 'ar' ? "يرجى الموافقة على الشروط أولاً." : "Please accept terms.");
       return;
     }
-    unlockAudio(); 
-    setUser({ name: "User", photo: "" });
-    if (joinId) connectToRoom(joinId);
-    else setStep('home');
+    
+    unlockAudio();
+    setIsLoggingIn(true);
+    
+    setTimeout(() => {
+      setIsLoggingIn(false);
+      setUser({ name: "User", photo: "" });
+      if (joinId) connectToRoom(joinId);
+      else setStep('home');
+    }, 1200);
+  };
+
+  const saveToHistory = (newScore: number) => {
+    const newEntry: SavedGame = {
+      id: Date.now().toString(),
+      date: new Date().toLocaleDateString(lang, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      title: questions[0]?.question.slice(0, 30) + "...",
+      questions: questions,
+      config: config,
+      bestScore: newScore
+    };
+    
+    const updated = [newEntry, ...history].slice(0, 10);
+    setHistory(updated);
+    localStorage.setItem('quiz_history', JSON.stringify(updated));
   };
 
   const startQuiz = async (base64?: string) => {
@@ -260,7 +375,9 @@ const App: React.FC = () => {
       const newState = { ...player, score: newScore, currentQuestionIndex: nextIdx, isFinished, isWaiting: true, attempts: updatedAttempts };
       setPlayer(newState);
 
-      if (mode === 'multi' && conn) conn.send({ type: 'PROGRESS', payload: newState });
+      if (mode === 'multi' && conn) {
+        conn.send({ type: 'PROGRESS', payload: newState });
+      }
 
       setTimeout(() => {
         if (!isFinished) {
@@ -268,9 +385,12 @@ const App: React.FC = () => {
           setWrongAnswers([]);
           setCorrectAnswerIdx(-1);
         } else {
-          stopBg();
-          playSound('win');
-          setStep('reward');
+          if (mode === 'solo' || (opponent && opponent.isFinished)) {
+            stopBg();
+            playSound('win');
+            saveToHistory(newScore);
+            setStep('reward');
+          }
         }
       }, 800);
     } else {
@@ -278,6 +398,9 @@ const App: React.FC = () => {
         setWrongAnswers(prev => [...prev, idx]);
         playSound('wrong');
         setPlayer(prev => ({ ...prev, attempts: updatedAttempts }));
+        if (mode === 'multi' && conn) {
+           conn.send({ type: 'PROGRESS', payload: { ...player, attempts: updatedAttempts } });
+        }
       }
     }
   };
@@ -373,18 +496,29 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen w-full flex flex-col items-center px-4 py-8 overflow-hidden relative">
       {renderLegalModal()}
+      
       <div className="w-full max-w-4xl flex justify-between items-center py-2 z-50 mb-4 sticky top-0">
-        <button onClick={() => setStep('home')} className="glass p-3 rounded-2xl text-xl transition-all">🏠</button>
+        <div className="flex gap-2">
+          <button onClick={() => { stopBg(); setStep('home'); }} className="glass p-3 rounded-2xl text-xl transition-all hover:scale-110 active:scale-95 shadow-lg" title={t.home}>🏠</button>
+          
+          {step !== 'auth' && step !== 'home' && (
+            <button onClick={handleBack} className="glass px-5 py-2 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-white/10 transition-all shadow-lg">
+              <span className={lang === 'ar' ? 'rotate-0' : 'rotate-180'}>⬅️</span>
+              {t.backBtn}
+            </button>
+          )}
+        </div>
+
         <div className="flex gap-2">
           {['ar', 'en', 'de'].map(l => (
-            <button key={l} onClick={() => setLang(l as Language)} className={`px-4 py-2 rounded-xl text-[10px] font-black ${lang === l ? 'bg-blue-600 text-white' : 'glass opacity-40'}`}>{l.toUpperCase()}</button>
+            <button key={l} onClick={() => setLang(l as Language)} className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all ${lang === l ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]' : 'glass opacity-40 hover:opacity-100'}`}>{l.toUpperCase()}</button>
           ))}
-          <button onClick={toggleMute} className={`glass p-3 rounded-2xl ${isMuted ? 'bg-rose-500/20' : 'bg-emerald-500/20'}`}>{isMuted ? '🔇' : '🔊'}</button>
+          <button onClick={toggleMute} className={`glass p-3 rounded-2xl transition-all hover:scale-110 ${isMuted ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>{isMuted ? '🔇' : '🔊'}</button>
         </div>
       </div>
 
       {step === 'auth' && (
-        <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm text-center space-y-12 animate-in">
+        <div className="flex-1 flex flex-col items-center justify-center w-full max-sm text-center space-y-12 animate-in">
           <QuizSnapLogo size={240} />
           <div className="w-full space-y-6">
             <div className="flex items-center gap-4 bg-white/5 p-5 rounded-3xl border border-white/10 group">
@@ -398,8 +532,28 @@ const App: React.FC = () => {
                  <span onClick={() => setShowLegal('terms')} className="text-blue-400 underline cursor-pointer hover:text-blue-300">{t.termsLink}</span>
                </p>
             </div>
-            <button onClick={handleLogin} className={`w-full bg-white text-slate-900 py-6 rounded-[2rem] font-black text-2xl shadow-xl transition-all ${!legalAccepted ? 'opacity-30 grayscale cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`}>
-              {t.google}
+            
+            <button 
+              onClick={handleLogin} 
+              disabled={isLoggingIn}
+              className={`w-full relative overflow-hidden bg-white text-slate-900 py-6 rounded-[2rem] font-black text-xl shadow-2xl transition-all flex items-center justify-center gap-4 ${!legalAccepted || isLoggingIn ? 'opacity-30 grayscale cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`}
+            >
+              {isLoggingIn ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></div>
+                  <span>{t.loggingIn}</span>
+                </div>
+              ) : (
+                <>
+                  <svg className="w-7 h-7" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                  </svg>
+                  <span>{t.google}</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -409,10 +563,85 @@ const App: React.FC = () => {
         <div className="flex flex-col items-center justify-center flex-1 w-full max-w-2xl space-y-8 animate-in">
           <QuizSnapLogo />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-lg px-4">
-            <button onClick={() => { setMode('solo'); setStep('config'); }} className="glass p-8 rounded-[3rem] text-center"><div className="text-6xl mb-4">🧠</div><h2 className="text-2xl font-black text-blue-100">{t.solo}</h2><p className="text-blue-300 text-xs mt-2 font-bold">{t.soloSub}</p></button>
-            <button onClick={initMultiplayerHost} className="glass p-8 rounded-[3rem] text-center border-indigo-500/30"><div className="text-6xl mb-4">🆚</div><h2 className="text-2xl font-black text-indigo-300">{t.multi}</h2><p className="text-indigo-400 text-xs mt-2 font-bold">{t.multiSub}</p></button>
+            <button onClick={() => { setMode('solo'); setStep('config'); }} className="glass p-8 rounded-[3rem] text-center hover:bg-white/5 transition-all"><div className="text-6xl mb-4">🧠</div><h2 className="text-2xl font-black text-blue-100">{t.solo}</h2><p className="text-blue-300 text-xs mt-2 font-bold">{t.soloSub}</p></button>
+            <button onClick={initMultiplayerHost} className="glass p-8 rounded-[3rem] text-center border-indigo-500/30 hover:bg-white/5 transition-all"><div className="text-6xl mb-4">🆚</div><h2 className="text-2xl font-black text-indigo-300">{t.multi}</h2><p className="text-indigo-400 text-xs mt-2 font-bold">{t.multiSub}</p></button>
           </div>
-          <button onClick={() => setStep('join')} className="glass w-full max-w-xs py-5 rounded-3xl font-black text-emerald-400">{t.joinTitle} 🔗</button>
+          <div className="flex gap-4 w-full max-w-lg px-4">
+            <button onClick={() => setStep('join')} className="glass flex-1 py-5 rounded-3xl font-black text-emerald-400 hover:bg-emerald-500/10 transition-all">{t.joinTitle} 🔗</button>
+            <button onClick={() => setStep('history')} className="glass flex-1 py-5 rounded-3xl font-black text-blue-300 hover:bg-blue-500/10 transition-all">{t.history}</button>
+          </div>
+        </div>
+      )}
+
+      {step === 'history' && (
+        <div className="w-full max-w-2xl glass p-8 rounded-[3.5rem] flex flex-col h-[80vh] shadow-2xl animate-in">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl font-black text-blue-200 uppercase">{t.historyTitle}</h2>
+            {history.length > 0 && (
+              <button onClick={clearAllHistory} className="bg-rose-600/20 text-rose-400 px-4 py-2 rounded-xl text-xs font-black hover:bg-rose-600 hover:text-white transition-all">
+                {t.clearAll}
+              </button>
+            )}
+          </div>
+          
+          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
+            {history.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-4">
+                 <div className="text-8xl opacity-20">📜</div>
+                 <p className="font-black text-xl">{t.noHistory}</p>
+              </div>
+            ) : (
+              history.map((item) => (
+                <div key={item.id} className="glass bg-white/5 p-6 rounded-3xl border border-white/10 relative group">
+                   <button onClick={() => deleteHistoryItem(item.id)} className="absolute top-4 right-4 text-slate-500 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all">🗑️</button>
+                   <div className="flex items-start gap-4">
+                      <div className="w-14 h-14 bg-indigo-600/20 rounded-2xl flex items-center justify-center text-3xl">📝</div>
+                      <div className="flex-1">
+                        <h4 className="font-black text-white text-lg leading-tight mb-2">{item.title}</h4>
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs font-bold text-blue-300/60 uppercase">
+                          <span>📅 {item.date}</span>
+                          <span>📋 {item.questions.length} {t.questionsCount}</span>
+                          <span className="text-emerald-400">🏆 {t.bestScoreLabel} {item.bestScore}</span>
+                        </div>
+                      </div>
+                   </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {step === 'lobby' && (
+        <div className="w-full max-w-md glass p-10 rounded-[3.5rem] space-y-8 text-center shadow-2xl animate-in">
+          <h2 className="text-3xl font-black text-indigo-300 uppercase tracking-widest">{t.hostCode}</h2>
+          <div className="bg-white/10 p-8 rounded-3xl border-2 border-indigo-500/30">
+             <span className="text-6xl sm:text-7xl font-black tracking-widest text-white drop-shadow-[0_0_20px_rgba(99,102,241,0.5)] uppercase">{roomId}</span>
+          </div>
+          <div className="space-y-4">
+             <p className="text-blue-300 font-bold text-sm uppercase">{t.shareCode}</p>
+             <div className="flex flex-col gap-3">
+               <button onClick={copyInviteLink} className={`w-full py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-3 transition-all ${copyStatus === 'success' ? 'bg-emerald-600' : 'bg-indigo-600'}`}>
+                 {copyStatus === 'success' ? t.copied : t.copy}
+               </button>
+             </div>
+          </div>
+          
+          <div className="pt-8 border-t border-white/10">
+             {!isFriendConnected ? (
+               <div className="flex flex-col items-center gap-4">
+                  <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+                  <p className="text-indigo-400 font-black animate-pulse">{t.waitingFriend}</p>
+               </div>
+             ) : (
+               <div className="space-y-6">
+                 <p className="text-emerald-400 font-black text-xl">{t.friendJoined}</p>
+                 <button onClick={() => setStep('config')} className="w-full bg-white text-slate-900 py-6 rounded-[2rem] font-black text-2xl shadow-xl animate-bounce">
+                    {t.proceed}
+                 </button>
+               </div>
+             )}
+          </div>
         </div>
       )}
 
@@ -501,6 +730,21 @@ const App: React.FC = () => {
 
       {step === 'quiz' && (
         <div className="w-full max-w-2xl space-y-6 animate-in py-2 flex flex-col h-full">
+          {mode === 'multi' && opponent && (
+            <div className="w-full glass bg-slate-900/40 p-4 rounded-3xl flex flex-col gap-2">
+               <div className="flex justify-between items-center px-2">
+                 <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{t.opponentProgress}</span>
+                 <span className="text-xs font-black text-white">{opponent.currentQuestionIndex} / {questions.length}</span>
+               </div>
+               <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden border border-white/10 relative">
+                  <div 
+                    className="h-full bg-gradient-to-r from-indigo-500 to-rose-500 transition-all duration-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+                    style={{ width: `${(opponent.currentQuestionIndex / questions.length) * 100}%` }}
+                  ></div>
+               </div>
+            </div>
+          )}
+
           <div className="quiz-card p-10 relative flex-1 flex flex-col border-t-[12px] border-blue-600">
             <div className="flex justify-between items-center mb-8">
                <div className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-black text-2xl shadow-lg border border-white/10"><span className="text-yellow-400 text-[10px] block opacity-70 uppercase mb-1">{t.scoreLabel}</span> {player.score}</div>
@@ -519,7 +763,7 @@ const App: React.FC = () => {
       {step === 'join' && (
         <div className="w-full max-w-sm glass p-10 rounded-[3.5rem] space-y-8 text-center shadow-2xl animate-in">
           <h2 className="text-2xl font-black text-emerald-400 uppercase tracking-widest">{t.joinTitle}</h2>
-          <input type="number" placeholder={t.joinPlaceholder} className="w-full p-6 bg-white/5 border border-white/10 rounded-2xl text-center text-3xl font-black text-white outline-none" value={joinId} onChange={(e) => setJoinId(e.target.value.slice(0, 6))} />
+          <input type="text" placeholder={t.joinPlaceholder} className="w-full p-6 bg-white/5 border border-white/10 rounded-2xl text-center text-3xl font-black text-white outline-none uppercase" value={joinId} onChange={(e) => setJoinId(e.target.value.toUpperCase().slice(0, 6))} />
           <button disabled={joinId.length < 6} onClick={() => connectToRoom(joinId)} className="w-full bg-emerald-600 text-white py-6 rounded-[2rem] font-black text-xl disabled:opacity-30">{t.connect}</button>
         </div>
       )}
