@@ -106,7 +106,7 @@ const App: React.FC = () => {
       acceptText: "أوافق على ",
       privacyLink: "سياسة الخصوصية",
       termsLink: "شروط الاستخدام",
-      solo: 'تحدي الإتقان 🧠', soloSub: 'تعلم فردي ذكي', multi: 'المواجهة الثنائية 🆚', multiSub: 'تحدَّ صديقك الآن',
+      solo: 'تحدي الإتقان 🧠', soloSub: 'تعلم فردي ذكي', multi: 'المواجهة الثنائية 🆚', multiSub: 'أنشئ التحدي وأرسله',
       settings: 'إعدادات الاختبار', winner: 'أداء عبقري! 💎',
       scoreLabel: 'النتيجة', points: 'نقطة', score: 'النقاط:', home: 'الرئيسية',
       generate: 'تحليل وإنشاء ✨', snap: 'تصوير الدرس 📸', 
@@ -119,17 +119,18 @@ const App: React.FC = () => {
       enableMusic: '🔊 الصوت مفعل',
       diffLabel: 'الصعوبة:',
       easy: 'سهل 👶', medium: 'متوسط ⚡', hard: 'صعب 🔥',
-      waitingFriend: 'بانتظار صديقك...', connect: 'دخول المواجهة 🔗', hostCode: 'كود الغرفة:', shareCode: 'أرسل الكود لصديقك',
+      waitingFriend: 'بانتظار صديقك...', connect: 'دخول المواجهة 🔗', hostCode: 'كود الغرفة:', shareCode: 'أرسل الكود لصديقك لبدء التحدي',
       you: 'أنت', opponent: 'الخصم', win: 'الفائز!', draw: 'تعادل!', totalScore: 'النتيجة النهائية',
       close: "إغلاق",
       quitConfirm: "هل تريد حقاً الخروج من الاختبار؟ ستفقد تقدمك.",
       inviteFriend: "رابط الدعوة:",
       friendJoined: "صديقك متصل الآن! 🟢",
-      proceed: "استمرار للإعدادات ➡️",
+      proceed: "استمرار للتحدي ➡️",
       clearAll: "مسح الكل 🗑️",
       dateLabel: "التاريخ:",
       bestScoreLabel: "أفضل نتيجة:",
-      opponentProgress: "تقدم الخصم"
+      opponentProgress: "تقدم الخصم",
+      hostWaitTitle: "غرفة الانتظار ⏳"
     },
     en: {
       welcome: "Welcome to QuizSnap 👋",
@@ -139,7 +140,7 @@ const App: React.FC = () => {
       acceptText: "I agree to ",
       privacyLink: "Privacy Policy",
       termsLink: "Terms of Use",
-      solo: 'Mastery Mode 🧠', soloSub: 'Solo Smart Learning', multi: '2-Player Duel 🆚', multiSub: 'Challenge a friend',
+      solo: 'Mastery Mode 🧠', soloSub: 'Solo Smart Learning', multi: '2-Player Duel 🆚', multiSub: 'Create & Share Duel',
       settings: 'Quiz Config', winner: 'Genius! 💎',
       scoreLabel: 'SCORE', points: 'Pts', score: 'Score:', home: 'Home',
       generate: 'Generate ✨', snap: 'Snap Lesson 📸', 
@@ -152,17 +153,18 @@ const App: React.FC = () => {
       enableMusic: '🔊 Sound Enabled',
       diffLabel: 'Difficulty:',
       easy: 'Easy 👶', medium: 'Med ⚡', hard: 'Hard 🔥',
-      waitingFriend: 'Waiting...', connect: 'Join Duel 🔗', hostCode: 'Room Code:', shareCode: 'Send to friend',
+      waitingFriend: 'Waiting...', connect: 'Join Duel 🔗', hostCode: 'Room Code:', shareCode: 'Send to friend to start',
       you: 'YOU', opponent: 'OPPONENT', win: 'WINNER!', draw: 'DRAW!', totalScore: 'FINAL SCORE',
       close: "Close",
       quitConfirm: "Quit quiz? You will lose progress.",
       inviteFriend: "Invite Link:",
       friendJoined: "Friend connected! 🟢",
-      proceed: "Proceed to Settings ➡️",
+      proceed: "Proceed to Duel ➡️",
       clearAll: "Clear All 🗑️",
       dateLabel: "Date:",
       bestScoreLabel: "Best Score:",
-      opponentProgress: "Opponent Progress"
+      opponentProgress: "Opponent Progress",
+      hostWaitTitle: "Waiting Room ⏳"
     },
     de: {
       welcome: "Willkommen 👋",
@@ -172,7 +174,7 @@ const App: React.FC = () => {
       acceptText: "Ich stimme zu ",
       privacyLink: "Datenschutz",
       termsLink: "Nutzungsbedingungen",
-      solo: 'Meisterschaft 🧠', soloSub: 'Einzelnes Lernen', multi: 'Duell 🆚', multiSub: 'Freunde fordern',
+      solo: 'Meisterschaft 🧠', soloSub: 'Einzelnes Lernen', multi: 'Duell 🆚', multiSub: 'Erstellen & Teilen',
       settings: 'Einstellungen', winner: 'Genial! 💎',
       scoreLabel: 'PUNKTE', points: 'Pkt', score: 'Punkte:', home: 'Start',
       generate: 'Generieren ✨', snap: 'Knipsen 📸', 
@@ -185,17 +187,18 @@ const App: React.FC = () => {
       enableMusic: '🔊 Sound an',
       diffLabel: 'Stufe:',
       easy: 'Leicht 👶', medium: 'Mittel ⚡', hard: 'Schwer 🔥',
-      waitingFriend: 'Warten...', connect: 'Beitreten 🔗', hostCode: 'Raumcode:', shareCode: 'Code senden',
+      waitingFriend: 'Warten...', connect: 'Beitreten 🔗', hostCode: 'Raumcode:', shareCode: 'Senden zum Starten',
       you: 'DU', opponent: 'GEGNER', win: 'GEWINNER!', draw: 'REMIS!', totalScore: 'ENDSTAND',
       close: "Schließen",
       quitConfirm: "Quiz verlassen? Dein Fortschritt geht verloren.",
       inviteFriend: "Einladungslink:",
       friendJoined: "Freund ist da! 🟢",
-      proceed: "Zu den Einstellungen ➡️",
+      proceed: "Zum Duell ➡️",
       clearAll: "Alle löschen 🗑️",
       dateLabel: "Datum:",
       bestScoreLabel: "Bestes Ergebnis:",
-      opponentProgress: "Gegner-Fortschritt"
+      opponentProgress: "Gegner-Fortschritt",
+      hostWaitTitle: "Warteraum ⏳"
     }
   };
 
@@ -212,9 +215,12 @@ const App: React.FC = () => {
   }, [lang]);
 
   const handleBack = () => {
-    if (step === 'config') setStep(mode === 'multi' ? 'lobby' : 'home');
+    if (step === 'config') setStep('home');
     else if (step === 'join') setStep('home');
-    else if (step === 'lobby') setStep('home');
+    else if (step === 'lobby') {
+      if (peer) peer.destroy();
+      setStep('config');
+    }
     else if (step === 'history') setStep('home');
     else if (step === 'paste') setStep('config');
     else if (step === 'ready') setStep('config');
@@ -268,23 +274,26 @@ const App: React.FC = () => {
     }
   };
 
-  const initMultiplayerHost = () => {
+  const initMultiplayerRoomAfterQuiz = (quizData: Question[]) => {
     unlockAudio();
     const id = generateShortId();
     const p = new Peer(id);
     p.on('open', () => {
       setRoomId(id);
       setPeer(p);
-      setMode('multi');
       setStep('lobby');
     });
     p.on('connection', (c: any) => {
       setConn(c);
       setIsFriendConnected(true);
       playSound('correct');
+      // إرسال البيانات فوراً عند الاتصال
+      setTimeout(() => {
+        c.send({ type: 'INIT_QUIZ', payload: { questions: quizData, config } });
+      }, 500);
       c.on('data', (data: MultiplayerMessage) => handleMultiplayerData(data));
     });
-    p.on('error', () => initMultiplayerHost());
+    p.on('error', () => initMultiplayerRoomAfterQuiz(quizData));
   };
 
   const connectToRoom = (id: string) => {
@@ -314,10 +323,8 @@ const App: React.FC = () => {
       alert(lang === 'ar' ? "يرجى الموافقة على الشروط أولاً." : "Please accept terms.");
       return;
     }
-    
     unlockAudio();
     setIsLoggingIn(true);
-    
     setTimeout(() => {
       setIsLoggingIn(false);
       setUser({ name: "User", photo: "" });
@@ -335,7 +342,6 @@ const App: React.FC = () => {
       config: config,
       bestScore: newScore
     };
-    
     const updated = [newEntry, ...history].slice(0, 10);
     setHistory(updated);
     localStorage.setItem('quiz_history', JSON.stringify(updated));
@@ -348,10 +354,12 @@ const App: React.FC = () => {
       const q = base64 ? await generateQuizFromImage(base64, config) : await generateQuizFromText(pastedText, config);
       setQuestions(q);
       setPlayer({ score: 0, currentQuestionIndex: 0, attempts: {}, isFinished: false, isWaiting: false, lastActionStatus: null });
-      if (mode === 'multi' && conn && conn.open) {
-        conn.send({ type: 'INIT_QUIZ', payload: { questions: q, config } });
+      
+      if (mode === 'multi') {
+        initMultiplayerRoomAfterQuiz(q);
+      } else {
+        setStep('ready');
       }
-      setStep('ready');
     } catch (e) { 
       alert("Analysis failed."); 
       setStep('config'); 
@@ -564,7 +572,7 @@ const App: React.FC = () => {
           <QuizSnapLogo />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-lg px-4">
             <button onClick={() => { setMode('solo'); setStep('config'); }} className="glass p-8 rounded-[3rem] text-center hover:bg-white/5 transition-all"><div className="text-6xl mb-4">🧠</div><h2 className="text-2xl font-black text-blue-100">{t.solo}</h2><p className="text-blue-300 text-xs mt-2 font-bold">{t.soloSub}</p></button>
-            <button onClick={initMultiplayerHost} className="glass p-8 rounded-[3rem] text-center border-indigo-500/30 hover:bg-white/5 transition-all"><div className="text-6xl mb-4">🆚</div><h2 className="text-2xl font-black text-indigo-300">{t.multi}</h2><p className="text-indigo-400 text-xs mt-2 font-bold">{t.multiSub}</p></button>
+            <button onClick={() => { setMode('multi'); setStep('config'); }} className="glass p-8 rounded-[3rem] text-center border-indigo-500/30 hover:bg-white/5 transition-all"><div className="text-6xl mb-4">🆚</div><h2 className="text-2xl font-black text-indigo-300">{t.multi}</h2><p className="text-indigo-400 text-xs mt-2 font-bold">{t.multiSub}</p></button>
           </div>
           <div className="flex gap-4 w-full max-w-lg px-4">
             <button onClick={() => setStep('join')} className="glass flex-1 py-5 rounded-3xl font-black text-emerald-400 hover:bg-emerald-500/10 transition-all">{t.joinTitle} 🔗</button>
@@ -614,12 +622,13 @@ const App: React.FC = () => {
 
       {step === 'lobby' && (
         <div className="w-full max-w-md glass p-10 rounded-[3.5rem] space-y-8 text-center shadow-2xl animate-in">
-          <h2 className="text-3xl font-black text-indigo-300 uppercase tracking-widest">{t.hostCode}</h2>
+          <h2 className="text-3xl font-black text-indigo-300 uppercase tracking-widest">{t.hostWaitTitle}</h2>
+          
           <div className="bg-white/10 p-8 rounded-3xl border-2 border-indigo-500/30">
              <span className="text-6xl sm:text-7xl font-black tracking-widest text-white drop-shadow-[0_0_20px_rgba(99,102,241,0.5)] uppercase">{roomId}</span>
           </div>
           <div className="space-y-4">
-             <p className="text-blue-300 font-bold text-sm uppercase">{t.shareCode}</p>
+             <p className="text-blue-300 font-bold text-sm uppercase px-4 leading-relaxed">{t.shareCode}</p>
              <div className="flex flex-col gap-3">
                <button onClick={copyInviteLink} className={`w-full py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-3 transition-all ${copyStatus === 'success' ? 'bg-emerald-600' : 'bg-indigo-600'}`}>
                  {copyStatus === 'success' ? t.copied : t.copy}
@@ -636,7 +645,7 @@ const App: React.FC = () => {
              ) : (
                <div className="space-y-6">
                  <p className="text-emerald-400 font-black text-xl">{t.friendJoined}</p>
-                 <button onClick={() => setStep('config')} className="w-full bg-white text-slate-900 py-6 rounded-[2rem] font-black text-2xl shadow-xl animate-bounce">
+                 <button onClick={() => setStep('ready')} className="w-full bg-white text-slate-900 py-6 rounded-[2rem] font-black text-2xl shadow-xl animate-bounce">
                     {t.proceed}
                  </button>
                </div>
