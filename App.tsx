@@ -11,82 +11,6 @@ const generateShortId = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-const LegalModal: React.FC<{ isOpen: boolean, type: 'privacy' | 'terms', onClose: () => void, lang: Language }> = ({ isOpen, type, onClose, lang }) => {
-  if (!isOpen) return null;
-  const content = {
-    ar: {
-      privacy: {
-        title: "سياسة الخصوصية",
-        text: `مرحباً بكم في QuizSnap. نحن نحترم خصوصيتكم:
-        1. الكاميرا: تُستخدم حصرياً لتحليل النصوص التعليمية. لا يتم تخزين الصور.
-        2. البيانات: يتم معالجة البيانات عبر Google Gemini API بأمان.
-        3. الطرف الثالث: نستخدم PeerJS للربط المباشر؛ لا نجمع بيانات الاتصال.
-        4. الحسابات: نعتمد على Google/Apple لضمان أمانكم دون تخزين كلمات مرور.`
-      },
-      terms: {
-        title: "شروط الاستخدام",
-        text: `باستخدامك للتطبيق، أنت توافق على:
-        1. الغرض: التطبيق تعليمي ترفيهي للأطفال والعائلات.
-        2. المحتوى: الأسئلة ناتجة عن ذكاء اصطناعي؛ يرجى التأكد من صحة المعلومات العلمية.
-        3. السلوك: يمنع استخدام الكاميرا لتصوير محتوى غير لائق.
-        4. الحسابات: الدخول عبر Google/Apple فقط لضمان الهوية الحقيقية.`
-      }
-    },
-    en: {
-      privacy: {
-        title: "Privacy Policy",
-        text: `Welcome to QuizSnap. We value your privacy:
-        1. Camera: Used solely for educational analysis. No images are stored.
-        2. Data: Processed securely via Google Gemini API.
-        3. Third Party: PeerJS is used for direct P2P connection.
-        4. Accounts: We rely on Google/Apple Sign-in for maximum security.`
-      },
-      terms: {
-        title: "Terms of Use",
-        text: `By using this app, you agree:
-        1. Purpose: Educational and entertainment use only.
-        2. Content: AI-generated questions; please verify facts.
-        3. Conduct: Improper use of camera/content is prohibited.
-        4. Accounts: Google/Apple login only to ensure real identity.`
-      }
-    },
-    de: {
-      privacy: {
-        title: "Datenschutzerklärung",
-        text: `Willkommen bei QuizSnap. Wir schätzen Ihre Privatsphäre:
-        1. Kamera: Ausschließlich für die Analyse von Bildungstexten verwendet. Bilder werden nicht gespeichert.
-        2. Daten: Sicher über die Google Gemini API verarbeitet.
-        3. Drittanbieter: PeerJS wird für direkte P2P-Verbindungen verwendet.
-        4. Konten: Wir setzen auf Google/Apple Sign-In für maximale Sicherheit.`
-      },
-      terms: {
-        title: "Nutzungsbedingungen",
-        text: `Durch die Nutzung dieser App stimmen Sie zu:
-        1. Zweck: Nur für Bildungs- und Unterhaltungszwecke.
-        2. Inhalt: KI-generierte Fragen; bitte Fakten überprüfen.
-        3. Verhalten: Unsachgemäße Nutzung der Kamera/Inhalte ist untersagt.
-        4. Konten: Nur Google/Apple-Login zur Sicherstellung की Identität.`
-      }
-    }
-  }[lang] || { privacy: {title: "", text: ""}, terms: {title: "", text: ""} };
-
-  const active = type === 'privacy' ? content.privacy : content.terms;
-
-  return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl animate-in fade-in">
-      <div className="glass w-full max-w-lg rounded-[3rem] p-10 border border-white/10 shadow-2xl flex flex-col max-h-[85vh]">
-        <h2 className="text-3xl font-black text-blue-300 mb-8 tracking-tight">{active.title}</h2>
-        <div className="overflow-y-auto text-sm leading-relaxed text-blue-100/70 mb-10 whitespace-pre-line pr-4 custom-scrollbar font-medium">
-          {active.text}
-        </div>
-        <button onClick={onClose} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black shadow-lg hover:bg-blue-500 transition-all active:scale-95">
-          {lang === 'ar' ? 'فهمت' : lang === 'de' ? 'Verstanden' : 'Got it'}
-        </button>
-      </div>
-    </div>
-  );
-};
-
 const QuizSnapLogo: React.FC<{ size?: number }> = ({ size = 180 }) => (
   <div className="flex flex-col items-center logo-glow">
     <div className="relative" style={{ width: size, height: size * 0.9 }}>
@@ -140,10 +64,8 @@ const RocketLoading: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 const App: React.FC = () => {
-  const [step, setStep] = useState<'auth' | 'home' | 'config' | 'loading' | 'quiz' | 'reward' | 'paste' | 'history' | 'lobby' | 'minigame_balloons'>('auth');
+  const [step, setStep] = useState<'auth' | 'home' | 'config' | 'loading' | 'quiz' | 'reward' | 'paste' | 'history' | 'lobby' | 'minigame_balloons' | 'join'>('auth');
   const [lang, setLang] = useState<Language>('ar');
-  const [user, setUser] = useState<{name: string, photo: string} | null>(null);
-  const [legal, setLegal] = useState<{ open: boolean, type: 'privacy' | 'terms' }>({ open: false, type: 'privacy' });
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [history, setHistory] = useState<SavedGame[]>([]);
   const [mode, setMode] = useState<'solo' | 'multi'>('solo');
@@ -168,63 +90,55 @@ const App: React.FC = () => {
   const translations = {
     ar: {
       welcome: "أهلاً بك في كويز سناب 👋",
-      authSub: "اختر كيف تود المتابعة",
-      noPassword: "لا نقوم بإنشاء كلمات مرور. فقط ادخل عبر Google أو Apple – سريع وآمن للعائلات.",
+      authSub: "ادخل عبر Google أو Apple – سريع وآمن للعائلات.",
       google: "الدخول عبر Google",
       apple: "الدخول عبر Apple",
       acceptTerms: "أوافق على سياسة الخصوصية وشروط الاستخدام",
-      solo: 'تحدي الإتقان 🧠', soloSub: 'تعلم فردي ذكي', multi: 'المواجهة الثنائية 🆚', multiSub: 'منافسة لايف (لاعبين)',
-      settings: 'إعدادات الاختبار', waitingFriend: 'بانتظار المنافس...', winner: 'أداء عبقري! 💎',
+      solo: 'تحدي الإتقان 🧠', soloSub: 'تعلم فردي ذكي', multi: 'المواجهة الثنائية 🆚', multiSub: 'أرسل رابطاً لصديقك',
+      settings: 'إعدادات الاختبار', waitingFriend: 'بانتظار انضمام صديقك...', winner: 'أداء عبقري! 💎',
       scoreLabel: 'النتيجة', points: 'نقطة', score: 'مجموع النقاط:', home: 'الرئيسية',
       generate: 'تحليل وإنشاء ✨', snap: 'تصوير الدرس 📸', 
       paste: 'نص يدوي 📝', pastePlaceholder: 'ضع النص هنا ليقوم الذكاء الاصطناعي بتحليله...', back: 'تراجع', loadingMsg: 'جاري التحليل...',
       balloons: '🎈 فرقع البالونات!', qType: 'اختر أنواع الأسئلة المفضلة:', mcq: 'ABC', tf: 'T/F', fill: '___',
       qCount: 'عدد الأسئلة المطلوبة:', history: 'السجل 📜', historyTitle: 'آخر 10 ألعاب', noHistory: 'لا يوجد سجل حالياً',
       quizOf: 'اختبار بتاريخ', questions: 'سؤال', joinTitle: 'انضم للمواجهة', joinPlaceholder: 'كود الغرفة',
-      connect: 'اتصال 🔗', hostCode: 'كود غرفتك:', shareCode: 'شارك الرابط مع صديقك للمواجهة الفورية',
-      copy: 'نسخ رابط الدعوة 🔗', copied: 'تم النسخ! ✅', backBtn: 'رجوع',
-      privacy: 'الخصوصية', terms: 'الشروط'
+      connect: 'دخول المواجهة 🔗', hostCode: 'كود الغرفة (اختياري):', shareCode: 'أرسل هذا الرابط لصديقك ليدخل معك اللعبة فوراً',
+      copy: 'نسخ رابط الدعوة المباشر 🔗', copied: 'تم نسخ الرابط! ✅', backBtn: 'رجوع',
+      autoJoinMsg: 'جاري الاتصال بالغرفة...'
     },
     en: {
       welcome: "Welcome to QuizSnap 👋",
-      authSub: "Choose how you want to continue",
-      noPassword: "We don't create passwords. Just sign in with Google or Apple – fast and safe for families.",
+      authSub: "Sign in with Google or Apple – fast and safe.",
       google: "Continue with Google",
       apple: "Continue with Apple",
       acceptTerms: "I agree to the Privacy Policy and Terms of Use",
-      solo: 'Mastery Mode 🧠', soloSub: 'Solo Smart Learning', multi: '2-Player Duel 🆚', multiSub: 'Live Competition',
-      settings: 'Quiz Config', waitingFriend: 'Waiting...', winner: 'Genius! 💎',
+      solo: 'Mastery Mode 🧠', soloSub: 'Solo Smart Learning', multi: '2-Player Duel 🆚', multiSub: 'Send link to a friend',
+      settings: 'Quiz Config', waitingFriend: 'Waiting for friend...', winner: 'Genius! 💎',
       scoreLabel: 'SCORE', points: 'Pts', score: 'Score:', home: 'Home',
       generate: 'Generate ✨', snap: 'Snap Lesson 📸', 
       paste: 'Paste 📝', pastePlaceholder: 'Paste text here...', back: 'Back', loadingMsg: 'Analyzing...',
       balloons: '🎈 Pop Balloons!', qType: 'Choose Question Types:', mcq: 'ABC', tf: 'T/F', fill: '___',
       qCount: 'Number of Questions:', history: 'History 📜', historyTitle: 'Last 10 Games', noHistory: 'No history',
       quizOf: 'Quiz of', questions: 'Questions', joinTitle: 'Join Duel', joinPlaceholder: 'Code',
-      connect: 'Connect 🔗', hostCode: 'Your Code:', shareCode: 'Share link with a friend',
-      copy: 'Copy Invite Link 🔗', copied: 'Copied! ✅', backBtn: 'Back',
-      privacy: 'Privacy', terms: 'Terms'
-    },
-    de: {
-      welcome: "Willkommen bei QuizSnap 👋",
-      authSub: "Wählen Sie, wie Sie fortfahren möchten",
-      noPassword: "Wir erstellen keine Passwörter. Melden Sie sich einfach mit Google oder Apple an – schnell und sicher für Familien.",
-      google: "Mit Google anmelden",
-      apple: "Mit Apple anmelden",
-      acceptTerms: "Ich stimme der Datenschutzerklärung und den Nutzungsbedingungen zu",
-      solo: 'Meister-Modus 🧠', soloSub: 'Solo Smart Learning', multi: '2-Spieler Duell 🆚', multiSub: 'Live-Wettbewerب',
-      settings: 'Konfiguration', waitingFriend: 'Warten...', winner: 'Genial! 💎',
-      scoreLabel: 'PUNKTE', points: 'Pkt', score: 'Punktzahl:', home: 'Start',
-      generate: 'Erstellen ✨', snap: 'Lektion knipsen 📸', 
-      paste: 'Einfügen 📝', pastePlaceholder: 'Text hier einfügen...', back: 'Zurück', loadingMsg: 'Analyse läuft...',
-      balloons: '🎈 Ballons zerplatzen!', qType: 'Wähle deine Fragetypen:', mcq: 'ABC', tf: 'R/F', fill: '___',
-      qCount: 'Anzahl der Fragen:', history: 'Verlauf 📜', historyTitle: 'Letzte 10 Spiele', noHistory: 'Noch kein Verlauf',
-      quizOf: 'Quiz vom', questions: 'Fragen', joinTitle: 'Duell beitreten', joinPlaceholder: 'Code',
-      connect: 'Verbinden 🔗', hostCode: 'Dein Code:', shareCode: 'Link mit Freund teilen',
-      copy: 'Einladungslink kopieren 🔗', copied: 'Kopiert! ✅', backBtn: 'Zurück',
-      privacy: 'Datenschutz', terms: 'Bedingungen'
+      connect: 'Join Fight 🔗', hostCode: 'Room Code (Optional):', shareCode: 'Send this direct link to your friend',
+      copy: 'Copy Direct Invite Link 🔗', copied: 'Link Copied! ✅', backBtn: 'Back',
+      autoJoinMsg: 'Connecting to room...'
     }
   };
-  const t = translations[lang] || translations.ar;
+  const t = translations[lang === 'ar' ? 'ar' : 'en'];
+
+  // تحليل الرابط التلقائي (Deep Link)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const roomFromUrl = params.get('room');
+    if (roomFromUrl) {
+      setJoinId(roomFromUrl);
+      // إذا كان المستخدم مسجلاً، نقوم بالربط تلقائياً
+      if (user) {
+        setTimeout(() => connectToRoom(roomFromUrl), 500);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     document.dir = (lang === 'ar') ? 'rtl' : 'ltr';
@@ -233,15 +147,22 @@ const App: React.FC = () => {
     if (saved) setHistory(JSON.parse(saved));
   }, [lang]);
 
-  // منطق PeerJS
+  // PeerJS Logic
   useEffect(() => {
     if (peer) {
       peer.on('connection', (c: any) => {
         setConn(c);
+        c.on('open', () => {
+          if (questions.length > 0) {
+            c.send({ type: 'INIT_QUIZ', payload: { questions, config } });
+            setStep('quiz');
+            playSound('bg');
+          }
+        });
         c.on('data', (data: MultiplayerMessage) => handleMultiplayerData(data));
       });
     }
-  }, [peer]);
+  }, [peer, questions, config]);
 
   const handleMultiplayerData = (data: MultiplayerMessage) => {
     switch (data.type) {
@@ -257,23 +178,24 @@ const App: React.FC = () => {
     }
   };
 
-  const initMultiplayer = () => {
+  const initMultiplayerHost = () => {
     const id = generateShortId();
     const p = new Peer(id);
     p.on('open', () => {
       setRoomId(id);
       setPeer(p);
-      setStep('lobby');
+      setMode('multi');
+      setStep('config'); // المضيف يجهز الأسئلة أولاً
     });
   };
 
-  const joinRoom = () => {
+  const connectToRoom = (id: string) => {
     const p = new Peer();
     p.on('open', () => {
-      const c = p.connect(joinId);
+      const c = p.connect(id);
       setConn(c);
       c.on('open', () => {
-        setStep('lobby');
+        setStep('loading'); // بانتظار استلام الأسئلة من المضيف
       });
       c.on('data', (data: MultiplayerMessage) => handleMultiplayerData(data));
       setPeer(p);
@@ -287,13 +209,21 @@ const App: React.FC = () => {
     }
     unlockAudio(); 
     setUser({ name: "User", photo: "" });
-    setStep('home');
+    
+    // التحقق إذا كان قادماً من رابط مباشر
+    const params = new URLSearchParams(window.location.search);
+    const r = params.get('room');
+    if (r) {
+      connectToRoom(r);
+    } else {
+      setStep('home');
+    }
   };
 
   const saveToHistory = (qs: Question[], cfg: QuizConfig) => {
     const newGame: SavedGame = {
       id: Date.now().toString(),
-      date: new Date().toLocaleString(lang === 'ar' ? 'ar-EG' : lang === 'de' ? 'de-DE' : 'en-US'),
+      date: new Date().toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US'),
       title: qs[0]?.question.substring(0, 30) + "...",
       questions: qs,
       config: cfg
@@ -312,12 +242,13 @@ const App: React.FC = () => {
       saveToHistory(q, config);
       setPlayer({ score: 0, currentQuestionIndex: 0, attempts: {}, isFinished: false, isWaiting: false, lastActionStatus: null });
       
-      if (mode === 'multi' && conn) {
-        conn.send({ type: 'INIT_QUIZ', payload: { questions: q, config } });
+      if (mode === 'multi') {
+        // المضيف الآن جاهز، يفتح اللوبي لمشاركة الرابط والانتظار
+        setStep('lobby');
+      } else {
+        playSound('bg');
+        setStep('quiz');
       }
-      
-      playSound('bg');
-      setStep('quiz');
     } catch (e) { 
       alert(lang === 'ar' ? "فشل التحليل." : "Analysis failed."); 
       setStep('config'); 
@@ -367,25 +298,35 @@ const App: React.FC = () => {
     }, 800);
   };
 
-  return (
-    <div className="min-h-screen w-full flex flex-col items-center px-4 py-8 overflow-hidden relative selection:bg-blue-500/30" onTouchStart={() => unlockAudio()} onMouseDown={() => unlockAudio()}>
-      <LegalModal isOpen={legal.open} type={legal.type} onClose={() => setLegal({ ...legal, open: false })} lang={lang} />
+  const getShareLink = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('room', roomId);
+    return url.toString();
+  };
 
-      {/* الرأس الدائم */}
+  const copyInviteLink = () => {
+    const link = getShareLink();
+    navigator.clipboard.writeText(link);
+    setCopyStatus('success');
+    setTimeout(() => setCopyStatus('idle'), 2500);
+  };
+
+  const [user, setUser] = useState<{name: string, photo: string} | null>(null);
+
+  return (
+    <div className="min-h-screen w-full flex flex-col items-center px-4 py-8 overflow-hidden relative selection:bg-blue-500/30">
+      {/* Header */}
       <div className="w-full max-w-4xl flex justify-between items-center py-2 z-50 mb-4 sticky top-0">
         <div className="flex gap-3">
           {step !== 'auth' && step !== 'home' && (
             <button onClick={() => { stopBg(); setStep('home'); }} className="glass px-6 py-3 rounded-2xl font-black text-xs border border-white/10 shadow-lg active:scale-95 transition-transform">{t.home}</button>
-          )}
-          {(step === 'config' || step === 'paste' || step === 'history' || step === 'lobby') && (
-            <button onClick={() => { stopBg(); setStep('home'); }} className="glass px-6 py-3 rounded-2xl font-black text-xs border border-white/10 shadow-lg opacity-70">{t.backBtn}</button>
           )}
           <button onClick={toggleMute} className={`glass p-3 rounded-2xl text-xl transition-all ${isMuted ? 'opacity-30 scale-90' : 'opacity-100 scale-100'}`}>
             {isMuted ? '🔇' : '🔊'}
           </button>
         </div>
         <div className="flex gap-2">
-          {['ar', 'en', 'de'].map(l => (
+          {['ar', 'en'].map(l => (
             <button key={l} onClick={() => setLang(l as Language)} className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all ${lang === l ? 'bg-blue-600 text-white shadow-lg scale-105' : 'glass opacity-40 hover:opacity-60'}`}>
               {l.toUpperCase()}
             </button>
@@ -428,13 +369,26 @@ const App: React.FC = () => {
               <h2 className="text-2xl font-black text-blue-100">{t.solo}</h2>
               <p className="text-blue-300 text-xs mt-2 opacity-60 font-bold">{t.soloSub}</p>
             </button>
-            <button onClick={() => { setMode('multi'); initMultiplayer(); }} className="group glass p-8 rounded-[3rem] transition-all hover:bg-indigo-600/20 border-indigo-500/30 flex flex-col items-center text-center">
-              <div className="text-6xl mb-4">🆚</div>
-              <h2 className="text-2xl font-black text-indigo-300">{t.multi}</h2>
-              <p className="text-indigo-400 text-xs mt-2 opacity-60 font-bold">{t.multiSub}</p>
-            </button>
+            <div className="flex flex-col gap-4">
+               <button onClick={initMultiplayerHost} className="group glass p-8 rounded-[3rem] transition-all hover:bg-indigo-600/20 border-indigo-500/30 flex flex-col items-center text-center w-full">
+                <div className="text-6xl mb-4">🆚</div>
+                <h2 className="text-2xl font-black text-indigo-300">{t.multi}</h2>
+                <p className="text-indigo-400 text-xs mt-2 opacity-60 font-bold">{t.multiSub}</p>
+              </button>
+              <button onClick={() => setStep('join')} className="glass py-4 rounded-3xl font-black text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10 transition-all">
+                {t.joinTitle} 🔗
+              </button>
+            </div>
           </div>
           <button onClick={() => setStep('history')} className="glass w-full max-w-xs py-5 rounded-3xl font-black text-blue-100 text-lg hover:bg-white/5 transition-all">{t.history}</button>
+        </div>
+      )}
+
+      {step === 'join' && (
+        <div className="w-full max-w-sm glass p-10 animate-in rounded-[3.5rem] space-y-8">
+           <h2 className="text-2xl font-black text-center text-blue-200">{t.joinTitle}</h2>
+           <input type="text" value={joinId} onChange={(e)=>setJoinId(e.target.value)} placeholder={t.joinPlaceholder} className="w-full bg-white/5 p-6 rounded-2xl text-center text-2xl font-black text-white outline-none border border-white/10 focus:border-blue-500" />
+           <button onClick={() => connectToRoom(joinId)} className="w-full bg-emerald-600 py-5 rounded-2xl font-black text-xl shadow-lg">{t.connect}</button>
         </div>
       )}
 
@@ -446,32 +400,31 @@ const App: React.FC = () => {
              <div className="space-y-6">
                 <div className="p-8 bg-white/5 rounded-3xl border border-white/10 text-center">
                    <p className="text-sm font-bold text-blue-300 mb-2 uppercase opacity-60">{t.hostCode}</p>
-                   <div className="text-5xl font-black text-white tracking-widest mb-4">{roomId}</div>
-                   <button onClick={() => { navigator.clipboard.writeText(roomId); setCopyStatus('success'); setTimeout(()=>setCopyStatus('idle'), 2000); }} className="text-xs font-black bg-blue-600/20 text-blue-300 px-4 py-2 rounded-full">
+                   <div className="text-5xl font-black text-white tracking-widest mb-6">{roomId}</div>
+                   
+                   <button 
+                     onClick={copyInviteLink} 
+                     className={`w-full py-6 rounded-2xl font-black text-lg transition-all shadow-xl flex items-center justify-center gap-3 ${copyStatus === 'success' ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'}`}
+                   >
                      {copyStatus === 'success' ? t.copied : t.copy}
                    </button>
                 </div>
-                <div className="relative flex items-center py-4">
-                  <div className="flex-grow border-t border-white/10"></div>
-                  <span className="flex-shrink mx-4 text-xs font-black text-white/20 uppercase">OR</span>
-                  <div className="flex-grow border-t border-white/10"></div>
-                </div>
-                <div className="space-y-4">
-                   <input type="text" value={joinId} onChange={(e)=>setJoinId(e.target.value)} placeholder={t.joinPlaceholder} className="w-full bg-white/5 p-6 rounded-2xl text-center text-2xl font-black text-white outline-none border border-white/10 focus:border-blue-500" />
-                   <button onClick={joinRoom} className="w-full bg-emerald-600 py-5 rounded-2xl font-black text-xl shadow-lg">{t.connect}</button>
+                
+                <p className="text-center text-blue-100/60 font-bold text-sm leading-relaxed px-4">{t.shareCode}</p>
+                
+                <div className="flex flex-col items-center gap-4 py-4">
+                  <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xl font-black text-white animate-pulse">{t.waitingFriend}</p>
                 </div>
              </div>
            ) : (
              <div className="text-center space-y-10 py-10">
                 <div className="flex justify-center items-center gap-6">
-                   <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-3xl">👤</div>
+                   <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-3xl border-2 border-white/20">👤</div>
                    <div className="text-4xl font-black text-indigo-400 animate-pulse">VS</div>
-                   <div className="w-20 h-20 rounded-full bg-emerald-600 flex items-center justify-center text-3xl">👤</div>
+                   <div className="w-20 h-20 rounded-full bg-emerald-600 flex items-center justify-center text-3xl border-2 border-white/20">👤</div>
                 </div>
-                <p className="text-xl font-black text-white animate-bounce">{t.waitingFriend}</p>
-                {roomId && (
-                  <button onClick={() => setStep('config')} className="w-full bg-indigo-600 py-6 rounded-[2rem] font-black text-2xl shadow-xl">{t.generate}</button>
-                )}
+                <p className="text-2xl font-black text-white animate-bounce">Starting Game...</p>
              </div>
            )}
         </div>
@@ -493,7 +446,7 @@ const App: React.FC = () => {
           <div className="space-y-4">
             <button onClick={() => fileInputRef.current?.click()} className="w-full bg-blue-600 text-white py-6 rounded-[2rem] font-black text-2xl shadow-xl hover:scale-105 active:scale-95 transition-all">{t.snap}</button>
             <button onClick={() => setStep('paste')} className="w-full bg-emerald-600 text-white py-6 rounded-[2rem] font-black text-2xl shadow-xl hover:scale-105 active:scale-95 transition-all">{t.paste}</button>
-            <input type="file" ref={fileInputRef} capture="environment" onChange={(e) => {
+            <input type="file" min-width="1" capture="environment" ref={fileInputRef} onChange={(e) => {
               const f = e.target.files?.[0];
               if (f) {
                 const r = new FileReader();
@@ -550,22 +503,6 @@ const App: React.FC = () => {
              <div className="text-3xl font-black bg-emerald-500/20 text-emerald-400 px-12 py-6 rounded-3xl border border-emerald-500/30 mb-10 inline-block">
                {t.score} {player.score}
              </div>
-             {mode === 'multi' && (
-               <div className="mb-8 p-6 bg-white/5 rounded-3xl">
-                  <p className="text-sm font-black text-blue-200 uppercase opacity-60 mb-2">Final Comparison</p>
-                  <div className="flex justify-around items-center">
-                    <div>
-                      <p className="text-2xl font-black text-white">{player.score}</p>
-                      <p className="text-[10px] font-bold text-blue-300">YOU</p>
-                    </div>
-                    <div className="text-2xl font-black text-indigo-500">VS</div>
-                    <div>
-                      <p className="text-2xl font-black text-white">{opponent.score}</p>
-                      <p className="text-[10px] font-bold text-emerald-300">OPPONENT</p>
-                    </div>
-                  </div>
-               </div>
-             )}
              <button onClick={() => { unlockAudio(); setStep('minigame_balloons'); }} className="w-full bg-indigo-600 border-b-8 border-indigo-800 text-white py-10 rounded-[2.5rem] font-black text-4xl shadow-xl active:scale-95 transition-all">
                {t.balloons} 🔥
              </button>

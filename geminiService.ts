@@ -3,10 +3,11 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { QuestionType, QuizConfig } from "./types";
 
 // إخبار TypeScript أن process موجود عالمياً لتجنب خطأ TS2580
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | 'AIzaSyA8WdVF80HARpum07RdbJcxNw3lJm2tpzA';
-if (!apiKey) throw new Error("VITE_GEMINI_API_KEY is missing from environment variables.");
-
-
+declare const process: {
+  env: {
+    API_KEY: string;
+  };
+};
 
 const QUIZ_SCHEMA = {
   type: Type.ARRAY,
@@ -41,7 +42,7 @@ const getSystemInstruction = (config: QuizConfig) => {
 };
 
 export const generateQuizFromImage = async (base64Image: string, config: QuizConfig) => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKey = process.env.API_KEY;
   if (!apiKey) throw new Error("API_KEY is missing from environment variables.");
 
   const ai = new GoogleGenAI({ apiKey });
@@ -59,16 +60,15 @@ export const generateQuizFromImage = async (base64Image: string, config: QuizCon
     },
   });
 
- const text = response.text ?? "";
-if (!text.trim()) {
-  throw new Error("Empty response from model.");
-}
-return JSON.parse(text.trim());
-
+  const text = response.text;
+  if (typeof text !== 'string') {
+    throw new Error("Model failed to generate a valid text response.");
+  }
+  return JSON.parse(text.trim());
 };
 
 export const generateQuizFromText = async (inputText: string, config: QuizConfig) => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKey = process.env.API_KEY;
   if (!apiKey) throw new Error("API_KEY is missing from environment variables.");
 
   const ai = new GoogleGenAI({ apiKey });
