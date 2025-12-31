@@ -3,7 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { QuestionType, QuizConfig } from "./types";
 
 // إخبار TypeScript أن process موجود عالمياً لتجنب خطأ TS2580
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | 'AIzaSyA8WdVF80HARpum07RdbJcxNw3lJm2tpzA';
 if (!apiKey) throw new Error("VITE_GEMINI_API_KEY is missing from environment variables.");
 
 
