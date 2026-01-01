@@ -38,12 +38,22 @@ const getSystemInstruction = (config: QuizConfig) => {
   Language: ${langMap[config.language]}.
   Ensure the questions are engaging for children.
   Allowed question types: ${typesDesc}.
-  Strictly return only the JSON array.`;
+  Strictly return only the JSON array. Do not include any markdown formatting or backticks.`;
+};
+
+/**
+ * تنظيف النص المستلم من النموذج في حال احتوى على علامات Markdown
+ */
+const cleanJsonResponse = (text: string): string => {
+  return text
+    .replace(/```json/g, '')
+    .replace(/```/g, '')
+    .trim();
 };
 
 export const generateQuizFromImage = async (base64Image: string, config: QuizConfig) => {
   const apiKey = process.env.API_KEY;
-  if (!apiKey) throw new Error("API_KEY is missing from environment variables.");
+  if (!apiKey) throw new Error("API_KEY_MISSING");
 
   const ai = new GoogleGenAI({ apiKey });
   const response = await ai.models.generateContent({
@@ -61,15 +71,14 @@ export const generateQuizFromImage = async (base64Image: string, config: QuizCon
   });
 
   const text = response.text;
-  if (typeof text !== 'string') {
-    throw new Error("Model failed to generate a valid text response.");
-  }
-  return JSON.parse(text.trim());
+  if (!text) throw new Error("EMPTY_RESPONSE");
+  
+  return JSON.parse(cleanJsonResponse(text));
 };
 
 export const generateQuizFromText = async (inputText: string, config: QuizConfig) => {
   const apiKey = process.env.API_KEY;
-  if (!apiKey) throw new Error("API_KEY is missing from environment variables.");
+  if (!apiKey) throw new Error("API_KEY_MISSING");
 
   const ai = new GoogleGenAI({ apiKey });
   const response = await ai.models.generateContent({
@@ -82,8 +91,7 @@ export const generateQuizFromText = async (inputText: string, config: QuizConfig
   });
 
   const text = response.text;
-  if (typeof text !== 'string') {
-    throw new Error("Model failed to generate a valid text response.");
-  }
-  return JSON.parse(text.trim());
+  if (!text) throw new Error("EMPTY_RESPONSE");
+
+  return JSON.parse(cleanJsonResponse(text));
 };

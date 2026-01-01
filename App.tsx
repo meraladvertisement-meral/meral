@@ -198,7 +198,7 @@ const App: React.FC = () => {
       dateLabel: "Datum:",
       bestScoreLabel: "Bestes Ergebnis:",
       opponentProgress: "Gegner-Fortschritt",
-      hostWaitTitle: "Warteraum ⏳"
+      hostWaitTitle: "Warterاum ⏳"
     }
   };
 
@@ -360,8 +360,15 @@ const App: React.FC = () => {
       } else {
         setStep('ready');
       }
-    } catch (e) { 
-      alert("Analysis failed."); 
+    } catch (e: any) { 
+      console.error("Quiz Generation Error:", e);
+      let errorMsg = "Analysis failed.";
+      if (e.message === "API_KEY_MISSING") {
+        errorMsg = lang === 'ar' ? "مفتاح الـ API مفقود! يرجى إعداده في Netlify." : "API Key is missing! Set it in Netlify.";
+      } else if (e.message === "EMPTY_RESPONSE") {
+        errorMsg = lang === 'ar' ? "لم يتم استلام رد من الذكاء الاصطناعي." : "Empty response from AI.";
+      }
+      alert(errorMsg); 
       setStep('config'); 
     }
   };
