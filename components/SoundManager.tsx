@@ -20,7 +20,7 @@ let lastType: string | null = null;
 export const useGameSounds = () => {
   const [isMuted, setIsMuted] = useState(() => {
     const saved = localStorage.getItem('quiz_muted');
-    // القيمة الافتراضية هي "كتم الصوت" (true) لحل مشاكل المتصفحات
+    // القيمة الافتراضية هي دائماً "مكتوم" (true) للامتثال لطلب المستخدم وسياسات المتصفح
     return saved === null ? true : saved === 'true';
   });
 
@@ -30,25 +30,11 @@ export const useGameSounds = () => {
     }
   }, [isMuted]);
 
-  const toggleMute = useCallback(() => {
-    setIsMuted(prev => {
-      const newVal = !prev;
-      localStorage.setItem('quiz_muted', String(newVal));
-      if (globalBgAudio) {
-        globalBgAudio.muted = newVal;
-        if (!newVal && globalBgAudio.paused) {
-          globalBgAudio.play().catch(() => {});
-        }
-      }
-      return newVal;
-    });
-  }, []);
-
   const playSound = useCallback((type: keyof typeof SOUNDS) => {
     if (type === 'bg' || type === 'balloon_bg') {
       if (globalBgAudio && lastType === type) {
         globalBgAudio.muted = isMuted;
-        if (globalBgAudio.paused) {
+        if (!isMuted && globalBgAudio.paused) {
           globalBgAudio.play().catch(() => {});
         }
         return;
@@ -67,9 +53,15 @@ export const useGameSounds = () => {
       globalBgAudio = audio;
       lastType = type;
       
-      audio.play().catch(() => {
-        console.warn("Autoplay blocked. User interaction required.");
-      });
+      // لا يبدأ التشغيل إلا إذا كان المستخدم قد ألغى الكتم
+      if (!isMuted) {
+        audio.play().catch(() => {
+          console.warn("Autoplay blocked or muted.");
+        });
+      } else {
+        // في حالة الكتم، نقوم بتحميل الصوت فقط ليكون جاهزاً
+        audio.load();
+      }
       return;
     }
 
@@ -80,6 +72,30 @@ export const useGameSounds = () => {
     }
   }, [isMuted]);
 
+  const toggleMute = useCallback(() => {
+    setIsMuted(prev => {
+      const newVal = !prev;
+      localStorage.setItem('quiz_muted', String(newVal));
+      
+      if (globalBgAudio) {
+        globalBgAudio.muted = newVal;
+        if (!newVal) {
+          // محاولة تشغيل الموسيقى فور إلغاء الكتم
+          globalBgAudio.play().catch(() => {
+            console.error("Playback failed. Interaction required.");
+          });
+        } else {
+          globalBgAudio.pause();
+        }
+      } else if (!newVal) {
+        // إذا لم يكن هناك موسيقى تعمل، نشغل موسيقى الخلفية الافتراضية
+        playSound('bg');
+      }
+      
+      return newVal;
+    });
+  }, [playSound]);
+
   const stopBg = useCallback(() => {
     if (globalBgAudio) {
       globalBgAudio.pause();
@@ -89,14 +105,12 @@ export const useGameSounds = () => {
   }, []);
 
   const unlockAudio = useCallback(() => {
-    if (globalBgAudio) {
-      globalBgAudio.muted = isMuted;
-      if (globalBgAudio.paused) {
-        globalBgAudio.play().catch(() => {});
-      }
-    }
     const silent = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
-    silent.play().catch(() => {});
+    silent.play().then(() => {
+        if (globalBgAudio && !isMuted && globalBgAudio.paused) {
+          globalBgAudio.play().catch(() => {});
+        }
+    }).catch(() => {});
   }, [isMuted]);
 
   return { playSound, stopBg, isMuted, toggleMute, unlockAudio };
